@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f10">
+    <title>Discipline — Personal Tracker</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-mark">D</div>
+            <div>
+                <h1>DISCIPLINE</h1>
+                <span>PERSONAL SYSTEM</span>
+            </div>
+        </div>
+
+        <nav>
+            <button class="nav-item active" data-section="dashboard">
+                <span>⌂</span>
+                Dashboard
+            </button>
+
+            <button class="nav-item" data-section="habits">
+                <span>◉</span>
+                Habits
+            </button>
+
+            <button class="nav-item" data-section="tasks">
+                <span>✓</span>
+                To-Do
+            </button>
+
+            <button class="nav-item" data-section="schedule">
+                <span>◷</span>
+                Schedule
+            </button>
+
+            <button class="nav-item" data-section="statistics">
+                <span>↗</span>
+                Statistics
+            </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <button class="sidebar-button" id="exportBtn">
+                ↓ Export data
+            </button>
+
+            <button class="sidebar-button" id="importBtn">
+                ↑ Import data
+            </button>
+
+            <input type="file" id="importFile" accept=".json" hidden>
+
+            <button class="sidebar-button danger" id="resetBtn">
+                Reset everything
+            </button>
+
+        </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- MOBILE HEADER -->
+        <header class="mobile-header">
+            <div class="brand">
+                <div class="brand-mark">D</div>
+                <strong>DISCIPLINE</strong>
+            </div>
+
+            <button id="mobileMenu">☰</button>
+        </header>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="section active">
+
+            <div class="topbar">
+
+                <div>
+                    <p class="eyebrow" id="todayDate">MONDAY, AUGUST 31</p>
+                    <h2>Build yourself.</h2>
+                    <p class="muted">Every day is a vote for the person you become.</p>
+                </div>
+
+                <button class="primary-btn" id="quickHabitBtn">
+                    + Complete habit
+                </button>
+
+            </div>
+
+            <!-- SCORE -->
+            <div class="dashboard-grid">
+
+                <div class="card score-card">
+
+                    <div class="card-header">
+                        <div>
+                            <p class="eyebrow">TODAY'S DISCIPLINE</p>
+                            <h3 id="scoreText">0%</h3>
+                        </div>
+
+                        <div class="score-ring" id="scoreRing">
+                            <span id="ringValue">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div id="scoreProgress"></div>
+                    </div>
+
+                    <div class="score-footer">
+                        <span id="completedSummary">0 habits completed</span>
+                        <span id="taskSummary">0 tasks completed</span>
+                    </div>
+
+                </div>
+
+                <div class="card streak-card">
+
+                    <p class="eyebrow">CURRENT STREAK</p>
+
+                    <div class="streak-number">
+                        <span id="currentStreak">0</span>
+                        <small>DAYS</small>
+                    </div>
+
+                    <p class="muted">Keep showing up.</p>
+
+                    <div class="streak-line"></div>
+
+                    <div class="mini-stats">
+                        <div>
+                            <strong id="bestStreak">0</strong>
+                            <span>Best streak</span>
+                        </div>
+
+                        <div>
+                            <strong id="activeDays">0</strong>
+                            <span>Active days</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- HABITS -->
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">TODAY</p>
+                    <h3>Habits</h3>
+                </div>
+
+                <button class="text-btn" onclick="openHabitModal()">
+                    Manage →
+                </button>
+            </div>
+
+            <div id="dashboardHabits" class="habit-grid"></div>
+
+            <!-- HEATMAP -->
+            <div class="section-heading heat-heading">
+                <div>
+                    <p class="eyebrow">CONSISTENCY</p>
+                    <h3>365 days</h3>
+                </div>
+
+                <div class="heat-legend">
+                    <span>Less</span>
+                    <i class="level l0"></i>
+                    <i class="level l1"></i>
+                    <i class="level l2"></i>
+                    <i class="level l3"></i>
+                    <i class="level l4"></i>
+                    <span>More</span>
+                </div>
+            </div>
+
+            <div class="card heatmap-card">
+                <div class="months" id="heatMonths"></div>
+                <div class="heatmap" id="heatmap"></div>
+
+                <div class="heatmap-footer">
+                    <span id="yearLabel"></span>
+                    <span>Daily discipline activity</span>
+                </div>
+            </div>
+
+            <!-- LOWER GRID -->
+            <div class="two-column">
+
+                <div class="card">
+
+                    <div class="card-header">
+                        <div>
+                            <p class="eyebrow">TODAY</p>
+                            <h3>To-do</h3>
+                        </div>
+
+                        <button class="icon-btn" onclick="openTaskModal()">+</button>
+                    </div>
+
+                    <div id="dashboardTasks"></div>
+
+                </div>
+
+                <div class="card">
+
+                    <div class="card-header">
+                        <div>
+                            <p class="eyebrow">YOUR DAY</p>
+                            <h3>Schedule</h3>
+                        </div>
+
+                        <button class="icon-btn" onclick="openScheduleModal()">+</button>
+                    </div>
+
+                    <div id="dashboardSchedule"></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- HABITS SECTION -->
+        <section id="habits" class="section">
+
+            <div class="topbar">
+
+                <div>
+                    <p class="eyebrow">TRACKING</p>
+                    <h2>Habits</h2>
+                    <p class="muted">Small actions. Repeated relentlessly.</p>
+                </div>
+
+                <button class="primary-btn" onclick="openHabitModal()">
+                    + New habit
+                </button>
+
+            </div>
+
+            <div id="habitManagement" class="management-list"></div>
+
+        </section>
+
+
+        <!-- TASKS -->
+        <section id="tasks" class="section">
+
+            <div class="topbar">
+
+                <div>
+                    <p class="eyebrow">EXECUTION</p>
+                    <h2>To-do</h2>
+                    <p class="muted">Know what needs to get done.</p>
+                </div>
+
+                <button class="primary-btn" onclick="openTaskModal()">
+                    + New task
+                </button>
+
+            </div>
+
+            <div class="task-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+            </div>
+
+            <div id="taskManagement"></div>
+
+        </section>
+
+
+        <!-- SCHEDULE -->
+        <section id="schedule" class="section">
+
+            <div class="topbar">
+
+                <div>
+                    <p class="eyebrow">TIME</p>
+                    <h2>Schedule</h2>
+                    <p class="muted">Design your day instead of drifting through it.</p>
+                </div>
+
+                <button class="primary-btn" onclick="openScheduleModal()">
+                    + Add event
+                </button>
+
+            </div>
+
+            <div class="schedule-day-header">
+                <button id="previousDay">←</button>
+
+                <div>
+                    <strong id="scheduleDate"></strong>
+                    <span id="scheduleDayName"></span>
+                </div>
+
+                <button id="nextDay">→</button>
+            </div>
+
+            <div id="scheduleManagement"></div>
+
+        </section>
+
+
+        <!-- STATISTICS -->
+        <section id="statistics" class="section">
+
+            <div class="topbar">
+
+                <div>
+                    <p class="eyebrow">ANALYSIS</p>
+                    <h2>Statistics</h2>
+                    <p class="muted">Measure the person you're becoming.</p>
+                </div>
+
+                <div class="range-buttons">
+                    <button class="range-btn active" data-range="7">7D</button>
+                    <button class="range-btn" data-range="30">30D</button>
+                    <button class="range-btn" data-range="90">90D</button>
+                    <button class="range-btn" data-range="365">365D</button>
+                </div>
+
+            </div>
+
+            <div class="stats-cards">
+
+                <div class="card">
+                    <p class="eyebrow">AVERAGE</p>
+                    <h3 id="averageScore">0%</h3>
+                    <span class="muted">discipline score</span>
+                </div>
+
+                <div class="card">
+                    <p class="eyebrow">HABITS</p>
+                    <h3 id="totalHabitCompletions">0</h3>
+                    <span class="muted">completed</span>
+                </div>
+
+                <div class="card">
+                    <p class="eyebrow">TASKS</p>
+                    <h3 id="totalTaskCompletions">0</h3>
+                    <span class="muted">completed</span>
+                </div>
+
+                <div class="card">
+                    <p class="eyebrow">CONSISTENCY</p>
+                    <h3 id="consistencyScore">0%</h3>
+                    <span class="muted">active days</span>
+                </div>
+
+            </div>
+
+            <div class="card chart-card">
+
+                <div class="card-header">
+                    <div>
+                        <p class="eyebrow">PERFORMANCE</p>
+                        <h3>Discipline over time</h3>
+                    </div>
+                </div>
+
+                <canvas id="disciplineChart"></canvas>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-header">
+                    <div>
+                        <p class="eyebrow">HABIT PERFORMANCE</p>
+                        <h3>Your habits</h3>
+                    </div>
+                </div>
+
+                <div id="habitStats"></div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- HABIT MODAL -->
+<div class="modal-overlay" id="habitModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">NEW HABIT</p>
+                <h3>Create habit</h3>
+            </div>
+
+            <button class="close-btn" onclick="closeModal('habitModal')">×</button>
+        </div>
+
+        <form id="habitForm">
+
+            <input type="hidden" id="habitId">
+
+            <label>
+                Habit name
+                <input type="text" id="habitName" placeholder="e.g. Workout" required>
+            </label>
+
+            <label>
+                Icon
+                <select id="habitIcon">
+                    <option>◉</option>
+                    <option>🏋</option>
+                    <option>💻</option>
+                    <option>📚</option>
+                    <option>📖</option>
+                    <option>💧</option>
+                    <option>😴</option>
+                    <option>🧘</option>
+                    <option>🚶</option>
+                    <option>✦</option>
+                </select>
+            </label>
+
+            <label>
+                Category
+                <input type="text" id="habitCategory" placeholder="Personal">
+            </label>
+
+            <label class="checkbox-label">
+                <input type="checkbox" id="habitDaily" checked>
+                Every day
+            </label>
+
+            <button class="primary-btn full" type="submit">
+                Save habit
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="taskModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <p class="eyebrow">TASK</p>
+                <h3>Create task</h3>
+            </div>
+
+            <button class="close-btn" onclick="closeModal('taskModal')">×</button>
+
+        </div>
+
+        <form id="taskForm">
+
+            <input type="hidden" id="taskId">
+
+            <label>
+                Task
+                <input type="text" id="taskName" placeholder="What needs to be done?" required>
+            </label>
+
+            <label>
+                Category
+                <input type="text" id="taskCategory" placeholder="College">
+            </label>
+
+            <label>
+                Priority
+                <select id="taskPriority">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </label>
+
+            <button class="primary-btn full" type="submit">
+                Save task
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- SCHEDULE MODAL -->
+<div class="modal-overlay" id="scheduleModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <p class="eyebrow">SCHEDULE</p>
+                <h3>Add event</h3>
+            </div>
+
+            <button class="close-btn" onclick="closeModal('scheduleModal')">×</button>
+
+        </div>
+
+        <form id="scheduleForm">
+
+            <input type="hidden" id="scheduleId">
+
+            <label>
+                Activity
+                <input type="text" id="scheduleTitle" placeholder="Coding" required>
+            </label>
+
+            <div class="form-row">
+
+                <label>
+                    Start
+                    <input type="time" id="scheduleStart" required>
+                </label>
+
+                <label>
+                    End
+                    <input type="time" id="scheduleEnd" required>
+                </label>
+
+            </div>
+
+            <label>
+                Category
+                <input type="text" id="scheduleCategory" placeholder="Work">
+            </label>
+
+            <button class="primary-btn full" type="submit">
+                Save event
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- DAY DETAIL MODAL -->
+<div class="modal-overlay" id="dayModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <div>
+                <p class="eyebrow">DAILY REVIEW</p>
+                <h3 id="dayModalTitle"></h3>
+            </div>
+
+            <button class="close-btn" onclick="closeModal('dayModal')">×</button>
+
+        </div>
+
+        <div id="dayDetails"></div>
+
+    </div>
+
+</div>
+
+
+<div id="toast"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
