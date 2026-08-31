@@ -1,140 +1,28 @@
-/* ============================================================
+/* =========================================================
    DISCIPLINE TRACKER
-   ============================================================ */
+   Everything is stored in localStorage.
+========================================================= */
 
-const STORAGE_KEY = "discipline_tracker_v1";
 
-let state = {
-    habits: [
-        {
-            id: crypto.randomUUID(),
-            name: "Workout",
-            icon: "🏋",
-            category: "Fitness",
-            daily: true
-        },
-        {
-            id: crypto.randomUUID(),
-            name: "Coding",
-            icon: "💻",
-            category: "Growth",
-            daily: true
-        },
-        {
-            id: crypto.randomUUID(),
-            name: "Study",
-            icon: "📚",
-            category: "College",
-            daily: true
-        },
-        {
-            id: crypto.randomUUID(),
-            name: "Reading",
-            icon: "📖",
-            category: "Mind",
-            daily: true
+// ================= DATA =================
+
+const STORAGE_KEY = "disciplineTracker";
+
+let data = loadData();
+
+function defaultData() {
+
+    return {
+        habits: [],
+
+        todos: [],
+
+        history: {},
+
+        settings: {
+            username: "Ayush"
         }
-    ],
-
-    completions: {},
-
-    tasks: [],
-
-    schedule: [],
-
-    settings: {
-        scheduleDate: getToday()
-    }
-};
-
-
-/* ============================================================
-   INITIALIZATION
-   ============================================================ */
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    loadData();
-
-    setupNavigation();
-    setupForms();
-    setupFilters();
-    setupScheduleNavigation();
-    setupMobileMenu();
-    setupDataButtons();
-
-    renderEverything();
-
-});
-
-
-/* ============================================================
-   DATE FUNCTIONS
-   ============================================================ */
-
-function getToday() {
-
-    const date = new Date();
-
-    return formatDate(date);
-
-}
-
-
-function formatDate(date) {
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-
-}
-
-
-function parseDate(dateString) {
-
-    const [year, month, day] = dateString.split("-").map(Number);
-
-    return new Date(year, month - 1, day);
-
-}
-
-
-function dateLabel(dateString) {
-
-    return parseDate(dateString).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-    });
-
-}
-
-
-function fullDateLabel(dateString) {
-
-    return parseDate(dateString).toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric"
-    });
-
-}
-
-
-/* ============================================================
-   STORAGE
-   ============================================================ */
-
-function saveData() {
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(state)
-    );
-
+    };
 }
 
 
@@ -142,1340 +30,588 @@ function loadData() {
 
     const saved = localStorage.getItem(STORAGE_KEY);
 
-    if (!saved) return;
+    if (!saved) {
+        return defaultData();
+    }
 
     try {
-
-        const parsed = JSON.parse(saved);
-
-        state = {
-            ...state,
-            ...parsed
-        };
-
-    } catch (error) {
-
-        console.error("Could not load data:", error);
-
+        return JSON.parse(saved);
+    } catch {
+        return defaultData();
     }
-
 }
 
 
-/* ============================================================
-   NAVIGATION
-   ============================================================ */
+function saveData() {
 
-function setupNavigation() {
-
-    document.querySelectorAll(".nav-item").forEach(button => {
-
-        button.addEventListener("click", () => {
-
-            const sectionId = button.dataset.section;
-
-            document.querySelectorAll(".nav-item")
-                .forEach(btn => btn.classList.remove("active"));
-
-            button.classList.add("active");
-
-            document.querySelectorAll(".section")
-                .forEach(section => section.classList.remove("active"));
-
-            document.getElementById(sectionId)
-                .classList.add("active");
-
-            if (sectionId === "statistics") {
-                renderStatistics();
-            }
-
-            if (window.innerWidth <= 750) {
-                document.querySelector(".sidebar")
-                    .classList.remove("mobile-open");
-            }
-
-        });
-
-    });
-
-}
-
-
-function setupMobileMenu() {
-
-    document.getElementById("mobileMenu")
-        .addEventListener("click", () => {
-
-            document.querySelector(".sidebar")
-                .classList.toggle("mobile-open");
-
-        });
-
-}
-
-
-/* ============================================================
-   RENDER EVERYTHING
-   ============================================================ */
-
-function renderEverything() {
-
-    updateTodayDate();
-
-    renderDashboardHabits();
-    renderHabitManagement();
-
-    renderDashboardTasks();
-    renderTaskManagement();
-
-    renderDashboardSchedule();
-    renderScheduleManagement();
-
-    renderHeatmap();
-
-    updateScore();
-
-    updateStreaks();
-
-    renderStatistics();
-
-    updateScheduleHeader();
-
-}
-
-
-/* ============================================================
-   TODAY
-   ============================================================ */
-
-function updateTodayDate() {
-
-    const today = new Date();
-
-    document.getElementById("todayDate")
-        .textContent = today
-        .toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric"
-        })
-        .toUpperCase();
-
-}
-
-
-/* ============================================================
-   HABITS
-   ============================================================ */
-
-function isHabitCompleted(habitId, date = getToday()) {
-
-    return !!(
-        state.completions[date] &&
-        state.completions[date].habits &&
-        state.completions[date].habits[habitId]
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(data)
     );
 
+    renderAll();
 }
 
 
-function toggleHabit(habitId, date = getToday()) {
+// ================= DATE =================
 
-    if (!state.completions[date]) {
+function dateKey(date = new Date()) {
 
-        state.completions[date] = {
+    const year = date.getFullYear();
+
+    const month = String(
+        date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+        date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+
+function dateFromKey(key) {
+
+    const parts = key.split("-");
+
+    return new Date(
+        Number(parts[0]),
+        Number(parts[1]) - 1,
+        Number(parts[2])
+    );
+}
+
+
+function todayKey() {
+    return dateKey();
+}
+
+
+// ================= INITIALIZE TODAY =================
+
+function ensureToday() {
+
+    const today = todayKey();
+
+    if (!data.history[today]) {
+
+        data.history[today] = {
             habits: {},
-            tasks: {}
+            todos: {}
         };
 
+        saveSilent();
     }
+}
 
-    if (!state.completions[date].habits) {
-        state.completions[date].habits = {};
-    }
 
-    const current =
-        !!state.completions[date].habits[habitId];
+function saveSilent() {
 
-    state.completions[date].habits[habitId] = !current;
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(data)
+    );
+}
+
+
+// ================= HABITS =================
+
+function addHabit(name, emoji) {
+
+    const habit = {
+
+        id: crypto.randomUUID(),
+
+        name: name,
+
+        emoji: emoji || "●",
+
+        created: todayKey()
+    };
+
+    data.habits.push(habit);
 
     saveData();
-
-    renderEverything();
-
-    showToast(
-        !current
-            ? "Habit completed ✓"
-            : "Habit unchecked"
-    );
-
-}
-
-
-function renderDashboardHabits() {
-
-    const container =
-        document.getElementById("dashboardHabits");
-
-    if (state.habits.length === 0) {
-
-        container.innerHTML = `
-            <div class="card">
-                <p class="muted">No habits yet. Create your first one.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML = state.habits.map(habit => {
-
-        const completed =
-            isHabitCompleted(habit.id);
-
-        return `
-            <div class="habit-item ${completed ? "completed" : ""}">
-
-                <div class="habit-icon">
-                    ${habit.icon}
-                </div>
-
-                <div class="habit-info">
-
-                    <div class="habit-name">
-                        ${escapeHtml(habit.name)}
-                    </div>
-
-                    <div class="habit-category">
-                        ${escapeHtml(habit.category || "Personal")}
-                    </div>
-
-                </div>
-
-                <button
-                    class="habit-check"
-                    onclick="toggleHabit('${habit.id}')"
-                    title="Complete habit"
-                >
-                    ✓
-                </button>
-
-            </div>
-        `;
-
-    }).join("");
-
-}
-
-
-function renderHabitManagement() {
-
-    const container =
-        document.getElementById("habitManagement");
-
-    if (state.habits.length === 0) {
-
-        container.innerHTML = `
-            <div class="card">
-                <p class="muted">No habits created yet.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML = state.habits.map(habit => {
-
-        return `
-            <div class="management-item">
-
-                <div class="habit-icon">
-                    ${habit.icon}
-                </div>
-
-                <div class="management-content">
-
-                    <h4>
-                        ${escapeHtml(habit.name)}
-                    </h4>
-
-                    <p>
-                        ${escapeHtml(habit.category || "Personal")}
-                        · ${habit.daily ? "Every day" : "Custom"}
-                    </p>
-
-                </div>
-
-                <div class="management-actions">
-
-                    <button
-                        class="outline-btn"
-                        onclick="editHabit('${habit.id}')"
-                    >
-                        Edit
-                    </button>
-
-                    <button
-                        class="outline-btn delete"
-                        onclick="deleteHabit('${habit.id}')"
-                    >
-                        Delete
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-    }).join("");
-
-}
-
-
-function openHabitModal(habit = null) {
-
-    const modal =
-        document.getElementById("habitModal");
-
-    document.getElementById("habitId").value =
-        habit ? habit.id : "";
-
-    document.getElementById("habitName").value =
-        habit ? habit.name : "";
-
-    document.getElementById("habitIcon").value =
-        habit ? habit.icon : "◉";
-
-    document.getElementById("habitCategory").value =
-        habit ? habit.category : "";
-
-    document.getElementById("habitDaily").checked =
-        habit ? habit.daily : true;
-
-    modal.classList.add("open");
-
-    setTimeout(() => {
-        document.getElementById("habitName").focus();
-    }, 100);
-
-}
-
-
-function editHabit(id) {
-
-    const habit =
-        state.habits.find(h => h.id === id);
-
-    if (habit) {
-        openHabitModal(habit);
-    }
-
 }
 
 
 function deleteHabit(id) {
 
-    const habit =
-        state.habits.find(h => h.id === id);
-
-    if (!habit) return;
-
-    if (!confirm(`Delete "${habit.name}"?`)) {
+    if (!confirm("Delete this habit?")) {
         return;
     }
 
-    state.habits =
-        state.habits.filter(h => h.id !== id);
+    data.habits =
+        data.habits.filter(
+            habit => habit.id !== id
+        );
+
+    Object.keys(data.history).forEach(day => {
+
+        if (data.history[day]?.habits) {
+
+            delete data.history[day].habits[id];
+
+        }
+
+    });
 
     saveData();
-
-    renderEverything();
-
-    showToast("Habit deleted");
-
 }
 
 
-function setupForms() {
+function toggleHabit(id) {
 
-    document.getElementById("habitForm")
-        .addEventListener("submit", event => {
+    ensureToday();
 
-            event.preventDefault();
-
-            const id =
-                document.getElementById("habitId").value;
-
-            const name =
-                document.getElementById("habitName").value.trim();
-
-            const icon =
-                document.getElementById("habitIcon").value;
-
-            const category =
-                document.getElementById("habitCategory").value.trim();
-
-            const daily =
-                document.getElementById("habitDaily").checked;
-
-            if (!name) return;
-
-            if (id) {
-
-                const habit =
-                    state.habits.find(h => h.id === id);
-
-                if (habit) {
-
-                    habit.name = name;
-                    habit.icon = icon;
-                    habit.category = category;
-                    habit.daily = daily;
-
-                }
-
-            } else {
-
-                state.habits.push({
-                    id: crypto.randomUUID(),
-                    name,
-                    icon,
-                    category,
-                    daily
-                });
-
-            }
-
-            saveData();
-
-            closeModal("habitModal");
-
-            renderEverything();
-
-            showToast("Habit saved");
-
-        });
-
-
-    document.getElementById("taskForm")
-        .addEventListener("submit", saveTask);
-
-
-    document.getElementById("scheduleForm")
-        .addEventListener("submit", saveSchedule);
-
-}
-
-
-/* ============================================================
-   TASKS
-   ============================================================ */
-
-let currentTaskFilter = "all";
-
-
-function isTaskCompleted(taskId, date = getToday()) {
-
-    return !!(
-        state.completions[date] &&
-        state.completions[date].tasks &&
-        state.completions[date].tasks[taskId]
-    );
-
-}
-
-
-function toggleTask(taskId, date = getToday()) {
-
-    if (!state.completions[date]) {
-
-        state.completions[date] = {
-            habits: {},
-            tasks: {}
-        };
-
-    }
-
-    if (!state.completions[date].tasks) {
-        state.completions[date].tasks = {};
-    }
+    const today = todayKey();
 
     const current =
-        !!state.completions[date].tasks[taskId];
+        data.history[today].habits[id] || false;
 
-    state.completions[date].tasks[taskId] =
-        !current;
+    data.history[today].habits[id] = !current;
 
     saveData();
-
-    renderEverything();
-
-    showToast(
-        !current
-            ? "Task completed ✓"
-            : "Task unchecked"
-    );
-
 }
 
 
-function renderDashboardTasks() {
+// ================= TODOS =================
 
-    const container =
-        document.getElementById("dashboardTasks");
+function addTodo(name, priority) {
 
-    const tasks = state.tasks.filter(
-        task => task.date === getToday()
-    );
+    const todo = {
 
-    if (tasks.length === 0) {
+        id: crypto.randomUUID(),
 
-        container.innerHTML = `
-            <p class="muted" style="padding-top:15px">
-                No tasks for today.
-            </p>
-        `;
+        name: name,
 
-        return;
-    }
+        priority: priority,
 
-    container.innerHTML =
-        tasks.map(task => taskHTML(task)).join("");
+        completed: false,
 
+        date: todayKey()
+    };
+
+    data.todos.push(todo);
+
+    saveData();
 }
 
 
-function taskHTML(task) {
+function deleteTodo(id) {
 
-    const completed =
-        isTaskCompleted(task.id, task.date);
-
-    return `
-        <div class="task-row ${completed ? "completed" : ""}">
-
-            <button
-                class="task-check"
-                onclick="toggleTask('${task.id}', '${task.date}')"
-            >
-                ✓
-            </button>
-
-            <div class="task-content">
-
-                <div class="task-title">
-                    ${escapeHtml(task.name)}
-                </div>
-
-                <div class="task-category">
-                    ${escapeHtml(task.category || "General")}
-                </div>
-
-            </div>
-
-            <div class="priority ${task.priority}"></div>
-
-        </div>
-    `;
-
-}
-
-
-function renderTaskManagement() {
-
-    const container =
-        document.getElementById("taskManagement");
-
-    let tasks = [...state.tasks];
-
-    if (currentTaskFilter === "active") {
-
-        tasks = tasks.filter(
-            task => !isTaskCompleted(task.id, task.date)
+    data.todos =
+        data.todos.filter(
+            todo => todo.id !== id
         );
 
-    }
+    saveData();
+}
 
-    if (currentTaskFilter === "completed") {
 
-        tasks = tasks.filter(
-            task => isTaskCompleted(task.id, task.date)
+function toggleTodo(id) {
+
+    const todo =
+        data.todos.find(
+            item => item.id === id
         );
 
-    }
+    if (!todo) return;
 
-    tasks.sort((a, b) => {
-
-        if (a.date !== b.date) {
-            return b.date.localeCompare(a.date);
-        }
-
-        return a.name.localeCompare(b.name);
-
-    });
-
-    if (tasks.length === 0) {
-
-        container.innerHTML = `
-            <div class="card">
-                <p class="muted">No tasks found.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="management-list">
-            ${tasks.map(task => {
-
-                const completed =
-                    isTaskCompleted(task.id, task.date);
-
-                return `
-                    <div class="management-item">
-
-                        <button
-                            class="task-check ${completed ? "completed" : ""}"
-                            onclick="toggleTask('${task.id}', '${task.date}')"
-                        >
-                            ${completed ? "✓" : ""}
-                        </button>
-
-                        <div class="management-content">
-
-                            <h4>
-                                ${escapeHtml(task.name)}
-                            </h4>
-
-                            <p>
-                                ${escapeHtml(task.category || "General")}
-                                · ${dateLabel(task.date)}
-                            </p>
-
-                        </div>
-
-                        <div class="management-actions">
-
-                            <button
-                                class="outline-btn"
-                                onclick="editTask('${task.id}')"
-                            >
-                                Edit
-                            </button>
-
-                            <button
-                                class="outline-btn delete"
-                                onclick="deleteTask('${task.id}')"
-                            >
-                                Delete
-                            </button>
-
-                        </div>
-
-                    </div>
-                `;
-
-            }).join("")}
-        </div>
-    `;
-
-}
-
-
-function openTaskModal(task = null) {
-
-    document.getElementById("taskId").value =
-        task ? task.id : "";
-
-    document.getElementById("taskName").value =
-        task ? task.name : "";
-
-    document.getElementById("taskCategory").value =
-        task ? task.category : "";
-
-    document.getElementById("taskPriority").value =
-        task ? task.priority : "medium";
-
-    document.getElementById("taskModal")
-        .classList.add("open");
-
-}
-
-
-function saveTask(event) {
-
-    event.preventDefault();
-
-    const id =
-        document.getElementById("taskId").value;
-
-    const name =
-        document.getElementById("taskName").value.trim();
-
-    const category =
-        document.getElementById("taskCategory").value.trim();
-
-    const priority =
-        document.getElementById("taskPriority").value;
-
-    if (!name) return;
-
-    if (id) {
-
-        const task =
-            state.tasks.find(t => t.id === id);
-
-        if (task) {
-
-            task.name = name;
-            task.category = category;
-            task.priority = priority;
-
-        }
-
-    } else {
-
-        state.tasks.push({
-
-            id: crypto.randomUUID(),
-
-            name,
-            category,
-            priority,
-
-            date: getToday()
-
-        });
-
-    }
+    todo.completed = !todo.completed;
 
     saveData();
-
-    closeModal("taskModal");
-
-    renderEverything();
-
-    showToast("Task saved");
-
 }
 
 
-function editTask(id) {
+// ================= HABIT RENDER =================
 
-    const task =
-        state.tasks.find(t => t.id === id);
-
-    if (task) {
-        openTaskModal(task);
-    }
-
-}
-
-
-function deleteTask(id) {
-
-    if (!confirm("Delete this task?")) {
-        return;
-    }
-
-    state.tasks =
-        state.tasks.filter(task => task.id !== id);
-
-    saveData();
-
-    renderEverything();
-
-    showToast("Task deleted");
-
-}
-
-
-function setupFilters() {
-
-    document.querySelectorAll(".filter-btn")
-        .forEach(button => {
-
-            button.addEventListener("click", () => {
-
-                document.querySelectorAll(".filter-btn")
-                    .forEach(btn =>
-                        btn.classList.remove("active")
-                    );
-
-                button.classList.add("active");
-
-                currentTaskFilter =
-                    button.dataset.filter;
-
-                renderTaskManagement();
-
-            });
-
-        });
-
-}
-
-
-/* ============================================================
-   SCHEDULE
-   ============================================================ */
-
-function renderDashboardSchedule() {
+function renderHabits() {
 
     const container =
-        document.getElementById("dashboardSchedule");
+        document.getElementById("habitList");
+
+    const empty =
+        document.getElementById("emptyHabits");
+
+    container.innerHTML = "";
+
+    if (data.habits.length === 0) {
+
+        empty.style.display = "block";
+
+        return;
+    }
+
+    empty.style.display = "none";
 
     const today =
-        getToday();
+        data.history[todayKey()]?.habits || {};
 
-    let events =
-        state.schedule.filter(
-            item => item.date === today
-        );
+    data.habits.forEach(habit => {
 
-    events.sort((a, b) =>
-        a.start.localeCompare(b.start)
-    );
-
-    if (events.length === 0) {
-
-        container.innerHTML = `
-            <p class="muted" style="padding-top:15px">
-                No events scheduled.
-            </p>
-        `;
-
-        return;
-    }
-
-    container.innerHTML =
-        events.map(scheduleHTML).join("");
-
-}
-
-
-function scheduleHTML(item) {
-
-    return `
-        <div class="schedule-row">
-
-            <div class="schedule-time">
-                ${item.start}
-                <br>
-                ${item.end}
-            </div>
-
-            <div class="schedule-line"></div>
-
-            <div class="schedule-info">
-
-                <div class="schedule-title">
-                    ${escapeHtml(item.title)}
-                </div>
-
-                <div class="schedule-category">
-                    ${escapeHtml(item.category || "General")}
-                </div>
-
-            </div>
-
-        </div>
-    `;
-
-}
-
-
-function renderScheduleManagement() {
-
-    const container =
-        document.getElementById("scheduleManagement");
-
-    const date =
-        state.settings.scheduleDate;
-
-    let events =
-        state.schedule.filter(
-            item => item.date === date
-        );
-
-    events.sort((a, b) =>
-        a.start.localeCompare(b.start)
-    );
-
-    if (events.length === 0) {
-
-        container.innerHTML = `
-            <div class="card">
-                <p class="muted">
-                    Nothing scheduled for this day.
-                </p>
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML = events.map(item => {
-
-        return `
-            <div class="management-item">
-
-                <div class="schedule-time">
-                    ${item.start}<br>${item.end}
-                </div>
-
-                <div class="schedule-line"></div>
-
-                <div class="management-content">
-
-                    <h4>
-                        ${escapeHtml(item.title)}
-                    </h4>
-
-                    <p>
-                        ${escapeHtml(item.category || "General")}
-                    </p>
-
-                </div>
-
-                <div class="management-actions">
-
-                    <button
-                        class="outline-btn"
-                        onclick="editSchedule('${item.id}')"
-                    >
-                        Edit
-                    </button>
-
-                    <button
-                        class="outline-btn delete"
-                        onclick="deleteSchedule('${item.id}')"
-                    >
-                        Delete
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-    }).join("");
-
-}
-
-
-function openScheduleModal(item = null) {
-
-    document.getElementById("scheduleId").value =
-        item ? item.id : "";
-
-    document.getElementById("scheduleTitle").value =
-        item ? item.title : "";
-
-    document.getElementById("scheduleStart").value =
-        item ? item.start : "09:00";
-
-    document.getElementById("scheduleEnd").value =
-        item ? item.end : "10:00";
-
-    document.getElementById("scheduleCategory").value =
-        item ? item.category : "";
-
-    document.getElementById("scheduleModal")
-        .classList.add("open");
-
-}
-
-
-function saveSchedule(event) {
-
-    event.preventDefault();
-
-    const id =
-        document.getElementById("scheduleId").value;
-
-    const title =
-        document.getElementById("scheduleTitle").value.trim();
-
-    const start =
-        document.getElementById("scheduleStart").value;
-
-    const end =
-        document.getElementById("scheduleEnd").value;
-
-    const category =
-        document.getElementById("scheduleCategory").value.trim();
-
-    if (!title || !start || !end) return;
-
-    const date =
-        state.settings.scheduleDate;
-
-    if (id) {
+        const completed =
+            today[habit.id] || false;
 
         const item =
-            state.schedule.find(s => s.id === id);
+            document.createElement("div");
 
-        if (item) {
+        item.className =
+            `item ${completed ? "completed" : ""}`;
 
-            item.title = title;
-            item.start = start;
-            item.end = end;
-            item.category = category;
+        item.innerHTML = `
 
-        }
+            <button
+                class="check ${completed ? "completed" : ""}"
+                data-habit="${habit.id}">
+            </button>
+
+            <div class="item-icon">
+                ${escapeHTML(habit.emoji)}
+            </div>
+
+            <div class="item-info">
+
+                <div class="item-name">
+                    ${escapeHTML(habit.name)}
+                </div>
+
+                <div class="item-meta">
+                    ${completed ? "Completed today" : "Not completed"}
+                </div>
+
+            </div>
+
+            <button
+                class="delete-btn"
+                data-delete-habit="${habit.id}">
+                ×
+            </button>
+
+        `;
+
+        container.appendChild(item);
+    });
+
+
+    container
+        .querySelectorAll("[data-habit]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => toggleHabit(
+                    button.dataset.habit
+                )
+            );
+
+        });
+
+
+    container
+        .querySelectorAll("[data-delete-habit]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => deleteHabit(
+                    button.dataset.deleteHabit
+                )
+            );
+
+        });
+}
+
+
+// ================= TODO RENDER =================
+
+function renderTodos() {
+
+    const container =
+        document.getElementById("todoList");
+
+    const empty =
+        document.getElementById("emptyTodos");
+
+    container.innerHTML = "";
+
+    const todayTodos =
+        data.todos.filter(
+            todo => todo.date === todayKey()
+        );
+
+    if (todayTodos.length === 0) {
+
+        empty.style.display = "block";
 
     } else {
 
-        state.schedule.push({
-
-            id: crypto.randomUUID(),
-
-            title,
-            start,
-            end,
-            category,
-
-            date
-
-        });
-
+        empty.style.display = "none";
     }
 
-    saveData();
 
-    closeModal("scheduleModal");
+    todayTodos.forEach(todo => {
 
-    renderEverything();
+        const item =
+            document.createElement("div");
 
-    showToast("Schedule saved");
+        item.className =
+            `item ${todo.completed ? "completed" : ""}`;
 
-}
+        item.innerHTML = `
 
+            <button
+                class="check ${todo.completed ? "completed" : ""}"
+                data-todo="${todo.id}">
+            </button>
 
-function editSchedule(id) {
+            <div class="item-info">
 
-    const item =
-        state.schedule.find(s => s.id === id);
+                <div class="item-name">
+                    ${escapeHTML(todo.name)}
+                </div>
 
-    if (item) {
-        openScheduleModal(item);
-    }
+                <div class="item-meta">
+                    ${todo.priority.toUpperCase()} PRIORITY
+                </div>
 
-}
+            </div>
 
+            <button
+                class="delete-btn"
+                data-delete-todo="${todo.id}">
+                ×
+            </button>
 
-function deleteSchedule(id) {
+        `;
 
-    if (!confirm("Delete this event?")) {
-        return;
-    }
-
-    state.schedule =
-        state.schedule.filter(
-            item => item.id !== id
-        );
-
-    saveData();
-
-    renderEverything();
-
-    showToast("Event deleted");
-
-}
-
-
-function setupScheduleNavigation() {
-
-    document.getElementById("previousDay")
-        .addEventListener("click", () => {
-
-            const date =
-                parseDate(state.settings.scheduleDate);
-
-            date.setDate(date.getDate() - 1);
-
-            state.settings.scheduleDate =
-                formatDate(date);
-
-            updateScheduleHeader();
-
-            renderScheduleManagement();
-
-        });
-
-
-    document.getElementById("nextDay")
-        .addEventListener("click", () => {
-
-            const date =
-                parseDate(state.settings.scheduleDate);
-
-            date.setDate(date.getDate() + 1);
-
-            state.settings.scheduleDate =
-                formatDate(date);
-
-            updateScheduleHeader();
-
-            renderScheduleManagement();
-
-        });
-
-}
-
-
-function updateScheduleHeader() {
-
-    const date =
-        state.settings.scheduleDate;
-
-    const parsed =
-        parseDate(date);
-
-    document.getElementById("scheduleDate")
-        .textContent =
-        parsed.toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric"
-        });
-
-    document.getElementById("scheduleDayName")
-        .textContent =
-        parsed.toLocaleDateString("en-US", {
-            weekday: "long"
-        });
-
-    renderScheduleManagement();
-
-}
-
-
-/* ============================================================
-   DISCIPLINE SCORE
-   ============================================================ */
-
-function getDayScore(date) {
-
-    const habitsTotal =
-        state.habits.length;
-
-    let habitsDone = 0;
-
-    state.habits.forEach(habit => {
-
-        if (isHabitCompleted(habit.id, date)) {
-            habitsDone++;
-        }
-
+        container.appendChild(item);
     });
 
-    const dayTasks =
-        state.tasks.filter(
-            task => task.date === date
-        );
 
-    let tasksDone = 0;
+    container
+        .querySelectorAll("[data-todo]")
+        .forEach(button => {
 
-    dayTasks.forEach(task => {
+            button.addEventListener(
+                "click",
+                () => toggleTodo(
+                    button.dataset.todo
+                )
+            );
 
-        if (isTaskCompleted(task.id, date)) {
-            tasksDone++;
-        }
+        });
 
-    });
 
-    const total =
-        habitsTotal + dayTasks.length;
+    container
+        .querySelectorAll("[data-delete-todo]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => deleteTodo(
+                    button.dataset.deleteTodo
+                )
+            );
+
+        });
+
 
     const completed =
-        habitsDone + tasksDone;
+        todayTodos.filter(
+            todo => todo.completed
+        ).length;
 
-    if (total === 0) {
-        return 0;
-    }
+    const total =
+        todayTodos.length;
+
+    const percentage =
+        total === 0
+            ? 0
+            : Math.round(
+                completed / total * 100
+            );
+
+
+    document.getElementById(
+        "todoProgressBar"
+    ).style.width = `${percentage}%`;
+
+
+    document.getElementById(
+        "todoProgressText"
+    ).textContent =
+        `${completed} / ${total}`;
+}
+
+
+// ================= SCORE =================
+
+function getTodayScore() {
+
+    const today =
+        data.history[todayKey()] || {
+            habits: {}
+        };
+
+
+    const habitTotal =
+        data.habits.length;
+
+    const habitDone =
+        data.habits.filter(
+            habit =>
+                today.habits?.[habit.id]
+        ).length;
+
+
+    const todos =
+        data.todos.filter(
+            todo =>
+                todo.date === todayKey()
+        );
+
+    const todoDone =
+        todos.filter(
+            todo => todo.completed
+        ).length;
+
+
+    const total =
+        habitTotal + todos.length;
+
+    const completed =
+        habitDone + todoDone;
+
+
+    if (total === 0) return 0;
+
 
     return Math.round(
         completed / total * 100
     );
-
 }
 
 
-function updateScore() {
+function renderScore() {
 
     const score =
-        getDayScore(getToday());
+        getTodayScore();
 
-    document.getElementById("scoreText")
-        .textContent = `${score}%`;
+    const ring =
+        document.querySelector(".score-ring");
 
-    document.getElementById("ringValue")
-        .textContent = `${score}%`;
-
-    document.getElementById("scoreProgress")
-        .style.width = `${score}%`;
-
-    const degrees =
-        score * 3.6;
-
-    document.getElementById("scoreRing")
-        .style.background = `
-            radial-gradient(
-                circle at center,
-                var(--surface) 57%,
-                transparent 58%
-            ),
-            conic-gradient(
-                var(--crimson-bright) ${degrees}deg,
-                var(--surface-3) ${degrees}deg
-            )
-        `;
-
-    const completedHabits =
-        state.habits.filter(
-            h => isHabitCompleted(h.id)
-        ).length;
-
-    const todayTasks =
-        state.tasks.filter(
-            t => t.date === getToday()
-        );
-
-    const completedTasks =
-        todayTasks.filter(
-            t => isTaskCompleted(t.id, t.date)
-        ).length;
-
-    document.getElementById("completedSummary")
-        .textContent =
-        `${completedHabits}/${state.habits.length} habits`;
-
-    document.getElementById("taskSummary")
-        .textContent =
-        `${completedTasks}/${todayTasks.length} tasks`;
-
-}
-
-
-/* ============================================================
-   STREAKS
-   ============================================================ */
-
-function updateStreaks() {
-
-    let streak = 0;
-
-    let date =
-        parseDate(getToday());
-
-    while (true) {
-
-        const dateString =
-            formatDate(date);
-
-        if (getDayScore(dateString) > 0) {
-
-            streak++;
-
-            date.setDate(
-                date.getDate() - 1
-            );
-
-        } else {
-
-            break;
-
-        }
-
-    }
-
-    let best = 0;
-    let current = 0;
-
-    const dates =
-        Object.keys(state.completions)
-            .sort();
-
-    let previous = null;
-
-    dates.forEach(dateString => {
-
-        if (getDayScore(dateString) > 0) {
-
-            if (
-                previous &&
-                daysBetween(
-                    parseDate(previous),
-                    parseDate(dateString)
-                ) === 1
-            ) {
-
-                current++;
-
-            } else {
-
-                current = 1;
-
-            }
-
-            best = Math.max(best, current);
-
-            previous = dateString;
-
-        } else {
-
-            current = 0;
-            previous = null;
-
-        }
-
-    });
-
-    const activeDays =
-        dates.filter(
-            date => getDayScore(date) > 0
-        ).length;
-
-    document.getElementById("currentStreak")
-        .textContent = streak;
-
-    document.getElementById("bestStreak")
-        .textContent = best;
-
-    document.getElementById("activeDays")
-        .textContent = activeDays;
-
-}
-
-
-function daysBetween(a, b) {
-
-    const difference =
-        b.getTime() - a.getTime();
-
-    return Math.round(
-        difference / 86400000
+    ring.style.setProperty(
+        "--score",
+        `${score}%`
     );
 
+
+    document.getElementById(
+        "todayScore"
+    ).textContent =
+        `${score}%`;
+
+
+    let message =
+        "Let's begin.";
+
+    if (score >= 90)
+        message = "Exceptional.";
+
+    else if (score >= 75)
+        message = "Strong day.";
+
+    else if (score >= 50)
+        message = "Keep pushing.";
+
+    else if (score > 0)
+        message = "Keep going.";
+
+
+    document.getElementById(
+        "scoreMessage"
+    ).textContent =
+        message;
 }
 
 
-/* ============================================================
-   HEATMAP
-   ============================================================ */
+// ================= HISTORY =================
+
+function getDayScore(key) {
+
+    const history =
+        data.history[key];
+
+    if (!history) return 0;
+
+
+    const habits =
+        Object.values(
+            history.habits || {}
+        );
+
+    const completedHabits =
+        habits.filter(Boolean).length;
+
+
+    const todos =
+        data.todos.filter(
+            todo => todo.date === key
+        );
+
+    const completedTodos =
+        todos.filter(
+            todo => todo.completed
+        ).length;
+
+
+    const total =
+        data.habits.length +
+        todos.length;
+
+
+    const completed =
+        completedHabits +
+        completedTodos;
+
+
+    if (total === 0) return 0;
+
+
+    return Math.round(
+        completed / total * 100
+    );
+}
+
+
+// ================= HEATMAP =================
+
+function getHeatLevel(score) {
+
+    if (score === 0) return 0;
+
+    if (score < 25) return 1;
+
+    if (score < 50) return 2;
+
+    if (score < 75) return 3;
+
+    return 4;
+}
+
 
 function renderHeatmap() {
 
     const container =
         document.getElementById("heatmap");
 
-    const months =
-        document.getElementById("heatMonths");
+    container.innerHTML = "";
+
 
     const today =
-        parseDate(getToday());
+        new Date();
 
     const start =
         new Date(today);
@@ -1484,11 +620,9 @@ function renderHeatmap() {
         start.getDate() - 364
     );
 
-    container.innerHTML = "";
 
-    const monthLabels = [];
+    let activeDays = 0;
 
-    let lastMonth = -1;
 
     for (
         let i = 0;
@@ -1496,707 +630,461 @@ function renderHeatmap() {
         i++
     ) {
 
-        const date =
+        const current =
             new Date(start);
 
-        date.setDate(
+        current.setDate(
             start.getDate() + i
         );
 
-        const dateString =
-            formatDate(date);
+
+        const key =
+            dateKey(current);
 
         const score =
-            getDayScore(dateString);
+            getDayScore(key);
+
+        if (score > 0) {
+            activeDays++;
+        }
+
 
         const cell =
             document.createElement("div");
 
         cell.className =
-            "heat-cell";
-
-        if (score >= 75) {
-            cell.classList.add("l4");
-        } else if (score >= 50) {
-            cell.classList.add("l3");
-        } else if (score >= 25) {
-            cell.classList.add("l2");
-        } else if (score > 0) {
-            cell.classList.add("l1");
-        }
+            `heat-cell level-${getHeatLevel(score)}`;
 
         cell.title =
-            `${dateLabel(dateString)} — ${score}%`;
+            `${key}: ${score}%`;
 
-        cell.addEventListener(
-            "click",
-            () => openDayDetails(dateString)
-        );
 
         container.appendChild(cell);
-
-        if (date.getMonth() !== lastMonth) {
-
-            monthLabels.push(
-                date.toLocaleDateString(
-                    "en-US",
-                    { month: "short" }
-                )
-            );
-
-            lastMonth =
-                date.getMonth();
-
-        }
-
     }
 
-    months.innerHTML =
-        monthLabels.map(
-            month => `<span>${month}</span>`
-        ).join("");
 
-    document.getElementById("yearLabel")
-        .textContent =
-        `${start.getFullYear()} — ${today.getFullYear()}`;
-
+    document.getElementById(
+        "heatmapSummary"
+    ).textContent =
+        `${activeDays} active days in the last year`;
 }
 
 
-/* ============================================================
-   DAY DETAILS
-   ============================================================ */
+// ================= STREAKS =================
 
-function openDayDetails(date) {
+function calculateStreaks() {
 
-    const score =
-        getDayScore(date);
+    const today =
+        new Date();
 
-    const completedHabits =
-        state.habits.filter(
-            habit => isHabitCompleted(habit.id, date)
-        );
+    let currentStreak = 0;
 
-    const dayTasks =
-        state.tasks.filter(
-            task => task.date === date
-        );
+    let bestStreak = 0;
 
-    const completedTasks =
-        dayTasks.filter(
-            task => isTaskCompleted(task.id, date)
-        );
+    let running = 0;
 
-    document.getElementById("dayModalTitle")
-        .textContent = dateLabel(date);
-
-    document.getElementById("dayDetails")
-        .innerHTML = `
-
-        <div class="detail-score">
-
-            <strong>${score}%</strong>
-
-            <span class="muted">
-                Discipline score
-            </span>
-
-        </div>
-
-        <div class="detail-section">
-
-            <h4>
-                HABITS
-            </h4>
-
-            ${state.habits.length === 0
-                ? `<p class="muted">No habits.</p>`
-                : state.habits.map(habit => `
-                    <div class="task-row ${
-                        isHabitCompleted(habit.id, date)
-                            ? "completed"
-                            : ""
-                    }">
-
-                        <span>
-                            ${habit.icon}
-                        </span>
-
-                        <div class="task-content">
-
-                            <div class="task-title">
-                                ${escapeHtml(habit.name)}
-                            </div>
-
-                        </div>
-
-                        <span>
-                            ${
-                                isHabitCompleted(
-                                    habit.id,
-                                    date
-                                )
-                                ? "✓"
-                                : "—"
-                            }
-                        </span>
-
-                    </div>
-                `).join("")
-            }
-
-        </div>
-
-        <div class="detail-section">
-
-            <h4>
-                TASKS
-            </h4>
-
-            ${
-                dayTasks.length === 0
-                ? `<p class="muted">No tasks.</p>`
-                : dayTasks.map(task => `
-                    <div class="task-row ${
-                        isTaskCompleted(task.id, date)
-                            ? "completed"
-                            : ""
-                    }">
-
-                        <div class="task-content">
-
-                            <div class="task-title">
-                                ${escapeHtml(task.name)}
-                            </div>
-
-                        </div>
-
-                        <span>
-                            ${
-                                isTaskCompleted(
-                                    task.id,
-                                    date
-                                )
-                                ? "✓"
-                                : "—"
-                            }
-                        </span>
-
-                    </div>
-                `).join("")
-            }
-
-        </div>
-    `;
-
-    document.getElementById("dayModal")
-        .classList.add("open");
-
-}
-
-
-/* ============================================================
-   STATISTICS
-   ============================================================ */
-
-let selectedRange = 7;
-
-
-function setupStatistics() {
-
-}
-
-
-document.querySelectorAll(".range-btn")
-    .forEach(button => {
-
-        button.addEventListener("click", () => {
-
-            document.querySelectorAll(".range-btn")
-                .forEach(btn =>
-                    btn.classList.remove("active")
-                );
-
-            button.classList.add("active");
-
-            selectedRange =
-                Number(button.dataset.range);
-
-            renderStatistics();
-
-        });
-
-    });
-
-
-function renderStatistics() {
-
-    const dates =
-        getLastDates(selectedRange);
-
-    const scores =
-        dates.map(
-            date => getDayScore(date)
-        );
-
-    const average =
-        scores.length
-            ? Math.round(
-                scores.reduce(
-                    (a, b) => a + b,
-                    0
-                ) / scores.length
-            )
-            : 0;
-
-    document.getElementById("averageScore")
-        .textContent = `${average}%`;
-
-    let habitCompletions = 0;
-
-    dates.forEach(date => {
-
-        state.habits.forEach(habit => {
-
-            if (isHabitCompleted(habit.id, date)) {
-                habitCompletions++;
-            }
-
-        });
-
-    });
-
-    let taskCompletions = 0;
-
-    dates.forEach(date => {
-
-        state.tasks
-            .filter(task => task.date === date)
-            .forEach(task => {
-
-                if (
-                    isTaskCompleted(
-                        task.id,
-                        date
-                    )
-                ) {
-                    taskCompletions++;
-                }
-
-            });
-
-    });
-
-    const active =
-        scores.filter(score => score > 0).length;
-
-    const consistency =
-        dates.length
-            ? Math.round(
-                active / dates.length * 100
-            )
-            : 0;
-
-    document.getElementById("totalHabitCompletions")
-        .textContent = habitCompletions;
-
-    document.getElementById("totalTaskCompletions")
-        .textContent = taskCompletions;
-
-    document.getElementById("consistencyScore")
-        .textContent = `${consistency}%`;
-
-    drawChart(dates, scores);
-
-    renderHabitStats(dates);
-
-}
-
-
-/* ============================================================
-   CHART
-   ============================================================ */
-
-function drawChart(dates, scores) {
-
-    const canvas =
-        document.getElementById("disciplineChart");
-
-    const ctx =
-        canvas.getContext("2d");
-
-    const rect =
-        canvas.getBoundingClientRect();
-
-    const dpr =
-        window.devicePixelRatio || 1;
-
-    canvas.width =
-        rect.width * dpr;
-
-    canvas.height =
-        rect.height * dpr;
-
-    ctx.scale(dpr, dpr);
-
-    const width =
-        rect.width;
-
-    const height =
-        rect.height;
-
-    ctx.clearRect(
-        0,
-        0,
-        width,
-        height
-    );
-
-    const padding = {
-        top: 20,
-        right: 15,
-        bottom: 35,
-        left: 35
-    };
-
-    const chartWidth =
-        width -
-        padding.left -
-        padding.right;
-
-    const chartHeight =
-        height -
-        padding.top -
-        padding.bottom;
-
-    /* GRID */
-
-    ctx.strokeStyle =
-        "#252529";
-
-    ctx.lineWidth = 1;
-
-    for (let i = 0; i <= 4; i++) {
-
-        const y =
-            padding.top +
-            chartHeight -
-            (chartHeight / 4) * i;
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            padding.left,
-            y
-        );
-
-        ctx.lineTo(
-            width - padding.right,
-            y
-        );
-
-        ctx.stroke();
-
-        ctx.fillStyle =
-            "#606067";
-
-        ctx.font =
-            "9px Inter";
-
-        ctx.fillText(
-            `${i * 25}`,
-            5,
-            y + 3
-        );
-
-    }
-
-    if (scores.length === 0) return;
-
-    /* LINE */
-
-    ctx.beginPath();
-
-    scores.forEach((score, index) => {
-
-        const x =
-            padding.left +
-            (
-                index /
-                Math.max(scores.length - 1, 1)
-            ) *
-            chartWidth;
-
-        const y =
-            padding.top +
-            chartHeight -
-            (score / 100) *
-            chartHeight;
-
-        if (index === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);
-        }
-
-    });
-
-    ctx.strokeStyle =
-        "#b71938";
-
-    ctx.lineWidth = 2;
-
-    ctx.stroke();
-
-    /* AREA */
-
-    ctx.lineTo(
-        padding.left + chartWidth,
-        padding.top + chartHeight
-    );
-
-    ctx.lineTo(
-        padding.left,
-        padding.top + chartHeight
-    );
-
-    ctx.closePath();
-
-    ctx.fillStyle =
-        "rgba(183,25,56,.08)";
-
-    ctx.fill();
-
-    /* POINTS */
-
-    scores.forEach((score, index) => {
-
-        const x =
-            padding.left +
-            (
-                index /
-                Math.max(scores.length - 1, 1)
-            ) *
-            chartWidth;
-
-        const y =
-            padding.top +
-            chartHeight -
-            (score / 100) *
-            chartHeight;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            x,
-            y,
-            2.5,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fillStyle =
-            "#c51d3e";
-
-        ctx.fill();
-
-    });
-
-    /* DATE LABELS */
-
-    const labelCount =
-        Math.min(7, dates.length);
 
     for (
         let i = 0;
-        i < labelCount;
+        i < 365;
         i++
     ) {
 
-        const index =
-            Math.round(
-                i *
-                (dates.length - 1) /
-                Math.max(labelCount - 1, 1)
-            );
+        const day =
+            new Date(today);
 
-        const x =
-            padding.left +
-            (
-                index /
-                Math.max(dates.length - 1, 1)
-            ) *
-            chartWidth;
-
-        ctx.fillStyle =
-            "#606067";
-
-        ctx.font =
-            "9px Inter";
-
-        ctx.textAlign =
-            "center";
-
-        ctx.fillText(
-            dateLabel(dates[index]),
-            x,
-            height - 10
+        day.setDate(
+            today.getDate() - i
         );
 
-    }
 
-}
+        const score =
+            getDayScore(
+                dateKey(day)
+            );
 
 
-function renderHabitStats(dates) {
+        if (score > 0) {
 
-    const container =
-        document.getElementById("habitStats");
+            running++;
 
-    if (state.habits.length === 0) {
+        } else {
 
-        container.innerHTML =
-            `<p class="muted">No habits.</p>`;
+            bestStreak =
+                Math.max(
+                    bestStreak,
+                    running
+                );
 
-        return;
-    }
+            running = 0;
+        }
 
-    container.innerHTML =
-        state.habits.map(habit => {
 
-            let completed = 0;
+        if (
+            i === 0 &&
+            score > 0
+        ) {
 
-            dates.forEach(date => {
+            currentStreak = 1;
+
+            for (
+                let j = 1;
+                j < 365;
+                j++
+            ) {
+
+                const previous =
+                    new Date(today);
+
+                previous.setDate(
+                    today.getDate() - j
+                );
+
 
                 if (
-                    isHabitCompleted(
-                        habit.id,
-                        date
-                    )
+                    getDayScore(
+                        dateKey(previous)
+                    ) > 0
                 ) {
-                    completed++;
+
+                    currentStreak++;
+
+                } else {
+
+                    break;
                 }
+            }
+        }
+    }
 
-            });
 
-            const percentage =
-                dates.length
-                    ? Math.round(
-                        completed /
-                        dates.length *
-                        100
-                    )
-                    : 0;
+    bestStreak =
+        Math.max(
+            bestStreak,
+            running
+        );
 
-            return `
-                <div class="stat-habit">
 
-                    <div class="stat-habit-top">
-
-                        <span>
-                            ${habit.icon}
-                            ${escapeHtml(habit.name)}
-                        </span>
-
-                        <strong>
-                            ${percentage}%
-                        </strong>
-
-                    </div>
-
-                    <div class="stat-progress">
-
-                        <div style="width:${percentage}%"></div>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
-
+    return {
+        currentStreak,
+        bestStreak
+    };
 }
 
 
-function getLastDates(number) {
+function renderStreaks() {
 
-    const dates = [];
+    const {
+        currentStreak,
+        bestStreak
+    } = calculateStreaks();
+
+
+    document.getElementById(
+        "currentStreak"
+    ).textContent =
+        currentStreak;
+
+
+    document.getElementById(
+        "bestStreak"
+    ).textContent =
+        bestStreak;
+
+
+    document.getElementById(
+        "insightStreak"
+    ).textContent =
+        `${bestStreak} days`;
+}
+
+
+// ================= WEEKLY CHART =================
+
+function getLastSevenDays() {
+
+    const days = [];
 
     const today =
-        parseDate(getToday());
+        new Date();
 
     for (
-        let i = number - 1;
+        let i = 6;
         i >= 0;
         i--
     ) {
 
-        const date =
+        const day =
             new Date(today);
 
-        date.setDate(
+        day.setDate(
             today.getDate() - i
         );
 
-        dates.push(
-            formatDate(date)
-        );
-
+        days.push(day);
     }
 
-    return dates;
-
+    return days;
 }
 
 
-/* ============================================================
-   QUICK HABIT
-   ============================================================ */
+function renderChart() {
 
-document.getElementById("quickHabitBtn")
-    .addEventListener("click", () => {
+    const container =
+        document.getElementById(
+            "weeklyChart"
+        );
 
-        if (state.habits.length === 0) {
+    container.innerHTML = "";
 
-            openHabitModal();
 
-            return;
-        }
+    const days =
+        getLastSevenDays();
 
-        const incomplete =
-            state.habits.find(
-                habit =>
-                    !isHabitCompleted(habit.id)
+
+    const scores =
+        days.map(
+            day =>
+                getDayScore(
+                    dateKey(day)
+                )
+        );
+
+
+    const average =
+        Math.round(
+            scores.reduce(
+                (a, b) => a + b,
+                0
+            ) / 7
+        );
+
+
+    document.getElementById(
+        "weeklyAverage"
+    ).textContent =
+        `${average}%`;
+
+
+    document.getElementById(
+        "insightAverage"
+    ).textContent =
+        `${average}%`;
+
+
+    scores.forEach(score => {
+
+        const bar =
+            document.createElement("div");
+
+        bar.className =
+            "chart-bar";
+
+        bar.style.height =
+            `${Math.max(score, 2)}%`;
+
+
+        const value =
+            document.createElement("span");
+
+        value.className =
+            "chart-value";
+
+        value.textContent =
+            `${score}%`;
+
+
+        bar.appendChild(value);
+
+        container.appendChild(bar);
+    });
+
+
+    const max =
+        Math.max(...scores);
+
+    const index =
+        scores.indexOf(max);
+
+
+    if (max > 0) {
+
+        document.getElementById(
+            "bestDay"
+        ).textContent =
+            days[index].toLocaleDateString(
+                "en-IN",
+                {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short"
+                }
             );
 
-        if (incomplete) {
+    } else {
 
-            toggleHabit(incomplete.id);
+        document.getElementById(
+            "bestDay"
+        ).textContent =
+            "—";
+    }
+}
 
-        } else {
 
-            showToast(
-                "All habits completed today 🔥"
-            );
+// ================= STATS =================
 
-        }
+function renderStats() {
+
+    const completed =
+        data.todos.filter(
+            todo => todo.completed
+        ).length;
+
+
+    document.getElementById(
+        "completedTasks"
+    ).textContent =
+        completed;
+
+
+    let activeDays = 0;
+
+
+    Object.keys(data.history)
+        .forEach(key => {
+
+            if (
+                getDayScore(key) > 0
+            ) {
+
+                activeDays++;
+            }
+
+        });
+
+
+    document.getElementById(
+        "activeDays"
+    ).textContent =
+        activeDays;
+}
+
+
+// ================= DATE =================
+
+function renderDate() {
+
+    const now =
+        new Date();
+
+
+    document.getElementById(
+        "currentDate"
+    ).textContent =
+        now.toLocaleDateString(
+            "en-IN",
+            {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+            }
+        );
+
+
+    const hour =
+        now.getHours();
+
+
+    let greeting =
+        "Stay disciplined.";
+
+
+    if (hour < 12)
+        greeting = "Good morning.";
+
+    else if (hour < 18)
+        greeting = "Good afternoon.";
+
+    else
+        greeting = "Good evening.";
+
+
+    document.getElementById(
+        "greeting"
+    ).textContent =
+        greeting;
+}
+
+
+// ================= SECURITY =================
+
+function escapeHTML(value) {
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+
+// ================= MODALS =================
+
+function openModal(id) {
+
+    document
+        .getElementById(id)
+        .classList.add("active");
+}
+
+
+function closeModal(id) {
+
+    document
+        .getElementById(id)
+        .classList.remove("active");
+}
+
+
+document
+    .querySelectorAll("[data-close]")
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () =>
+                closeModal(
+                    button.dataset.close
+                )
+        );
 
     });
 
 
-/* ============================================================
-   MODALS
-   ============================================================ */
-
-function closeModal(id) {
-
-    document.getElementById(id)
-        .classList.remove("open");
-
-}
-
-
-document.querySelectorAll(".modal-overlay")
+document
+    .querySelectorAll(".modal-overlay")
     .forEach(overlay => {
 
         overlay.addEventListener(
@@ -2206,7 +1094,10 @@ document.querySelectorAll(".modal-overlay")
                 if (
                     event.target === overlay
                 ) {
-                    overlay.classList.remove("open");
+
+                    overlay.classList.remove(
+                        "active"
+                    );
                 }
 
             }
@@ -2215,219 +1106,357 @@ document.querySelectorAll(".modal-overlay")
     });
 
 
-document.addEventListener("keydown", event => {
+document
+    .addEventListener(
+        "keydown",
+        event => {
 
-    if (event.key === "Escape") {
+            if (event.key === "Escape") {
 
-        document.querySelectorAll(
-            ".modal-overlay.open"
-        ).forEach(modal => {
+                document
+                    .querySelectorAll(
+                        ".modal-overlay.active"
+                    )
+                    .forEach(modal =>
+                        modal.classList.remove(
+                            "active"
+                        )
+                    );
 
-            modal.classList.remove("open");
-
-        });
-
-    }
-
-});
-
-
-/* ============================================================
-   EXPORT / IMPORT
-   ============================================================ */
-
-function setupDataButtons() {
-
-    document.getElementById("exportBtn")
-        .addEventListener("click", exportData);
-
-
-    document.getElementById("importBtn")
-        .addEventListener("click", () => {
-
-            document.getElementById("importFile")
-                .click();
-
-        });
-
-
-    document.getElementById("importFile")
-        .addEventListener(
-            "change",
-            importData
-        );
-
-
-    document.getElementById("resetBtn")
-        .addEventListener("click", resetData);
-
-}
-
-
-function exportData() {
-
-    const data =
-        JSON.stringify(
-            state,
-            null,
-            2
-        );
-
-    const blob =
-        new Blob(
-            [data],
-            {
-                type: "application/json"
             }
-        );
-
-    const url =
-        URL.createObjectURL(blob);
-
-    const link =
-        document.createElement("a");
-
-    link.href = url;
-
-    link.download =
-        `discipline-backup-${getToday()}.json`;
-
-    link.click();
-
-    URL.revokeObjectURL(url);
-
-    showToast("Data exported");
-
-}
-
-
-function importData(event) {
-
-    const file =
-        event.target.files[0];
-
-    if (!file) return;
-
-    const reader =
-        new FileReader();
-
-    reader.onload = () => {
-
-        try {
-
-            const imported =
-                JSON.parse(reader.result);
-
-            if (
-                !imported.habits ||
-                !imported.completions
-            ) {
-                throw new Error("Invalid file");
-            }
-
-            state =
-                imported;
-
-            saveData();
-
-            renderEverything();
-
-            showToast("Data imported successfully");
-
-        } catch (error) {
-
-            alert(
-                "That file does not appear to be a valid Discipline backup."
-            );
 
         }
-
-    };
-
-    reader.readAsText(file);
-
-}
-
-
-function resetData() {
-
-    const confirmation =
-        confirm(
-            "This will permanently delete ALL your habits, tasks, schedules and history. Continue?"
-        );
-
-    if (!confirmation) return;
-
-    localStorage.removeItem(
-        STORAGE_KEY
     );
 
-    location.reload();
 
-}
+// ================= ADD HABIT =================
 
+document
+    .getElementById("addHabitBtn")
+    .addEventListener(
+        "click",
+        () => {
 
-/* ============================================================
-   UTILITIES
-   ============================================================ */
+            document.getElementById(
+                "habitNameInput"
+            ).value = "";
 
-function escapeHtml(text) {
+            document.getElementById(
+                "habitEmojiInput"
+            ).value = "";
 
-    if (text === undefined || text === null) {
-        return "";
-    }
+            openModal("habitModal");
 
-    return String(text)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-
-}
-
-
-let toastTimer;
-
-function showToast(message) {
-
-    const toast =
-        document.getElementById("toast");
-
-    toast.textContent =
-        message;
-
-    toast.classList.add("show");
-
-    clearTimeout(toastTimer);
-
-    toastTimer =
-        setTimeout(() => {
-
-            toast.classList.remove("show");
-
-        }, 2200);
-
-}
+            setTimeout(
+                () =>
+                    document.getElementById(
+                        "habitNameInput"
+                    ).focus(),
+                100
+            );
+        }
+    );
 
 
-/* ============================================================
-   WINDOW RESIZE
-   ============================================================ */
+document
+    .getElementById("saveHabitBtn")
+    .addEventListener(
+        "click",
+        () => {
 
-window.addEventListener(
-    "resize",
-    () => {
+            const name =
+                document.getElementById(
+                    "habitNameInput"
+                ).value.trim();
 
-        if (
-            document
-                .getElementById("statistics")
-                .classList.contains("active")
-        ) {
 
-            renderStatistics();
+            const emoji =
+                document.getElementById(
+                    "habitEmojiInput"
+                ).value.trim();
+
+
+            if (!name) {
+
+                alert(
+                    "Please enter a habit name."
+                );
+
+                return;
+            }
+
+
+            addHabit(
+                name,
+                emoji
+            );
+
+            closeModal("habitModal");
+        }
+    );
+
+
+// ================= ADD TODO =================
+
+document
+    .getElementById("addTodoBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            document.getElementById(
+                "todoInput"
+            ).value = "";
+
+            openModal("todoModal");
+
+            setTimeout(
+                () =>
+                    document.getElementById(
+                        "todoInput"
+                    ).focus(),
+                100
+            );
+        }
+    );
+
+
+document
+    .getElementById("saveTodoBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            const name =
+                document.getElementById(
+                    "todoInput"
+                ).value.trim();
+
+
+            const priority =
+                document.getElementById(
+                    "todoPriority"
+                ).value;
+
+
+            if (!name) {
+
+                alert(
+                    "Please enter a task."
+                );
+
+                return;
+            }
+
+
+            addTodo(
+                name,
+                priority
+            );
+
+            closeModal("todoModal");
+        }
+    );
+
+
+document
+    .getElementById("todoInput")
+    .addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                document
+                    .getElementById(
+                        "saveTodoBtn"
+                    )
+                    .click();
+            }
 
         }
+    );
 
-    }
-);
+
+document
+    .getElementById("habitNameInput")
+    .addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                document
+                    .getElementById(
+                        "saveHabitBtn"
+                    )
+                    .click();
+            }
+
+        }
+    );
+
+
+// ================= EXPORT =================
+
+document
+    .getElementById("exportBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            const json =
+                JSON.stringify(
+                    data,
+                    null,
+                    2
+                );
+
+
+            const blob =
+                new Blob(
+                    [json],
+                    {
+                        type:
+                            "application/json"
+                    }
+                );
+
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement("a");
+
+            link.href = url;
+
+            link.download =
+                `discipline-backup-${todayKey()}.json`;
+
+            link.click();
+
+            URL.revokeObjectURL(url);
+        }
+    );
+
+
+// ================= IMPORT =================
+
+document
+    .getElementById("importBtn")
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById(
+                    "importFile"
+                )
+                .click();
+        }
+    );
+
+
+document
+    .getElementById("importFile")
+    .addEventListener(
+        "change",
+        event => {
+
+            const file =
+                event.target.files[0];
+
+            if (!file) return;
+
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function () {
+
+                    try {
+
+                        const imported =
+                            JSON.parse(
+                                reader.result
+                            );
+
+
+                        if (
+                            !imported.habits ||
+                            !imported.todos ||
+                            !imported.history
+                        ) {
+
+                            throw new Error();
+
+                        }
+
+
+                        if (
+                            confirm(
+                                "Replace your current data with this backup?"
+                            )
+                        ) {
+
+                            data =
+                                imported;
+
+                            saveData();
+                        }
+
+
+                    } catch {
+
+                        alert(
+                            "Invalid backup file."
+                        );
+                    }
+
+                };
+
+
+            reader.readAsText(file);
+
+            event.target.value = "";
+        }
+    );
+
+
+// ================= RENDER EVERYTHING =================
+
+function renderAll() {
+
+    ensureToday();
+
+    renderDate();
+
+    renderHabits();
+
+    renderTodos();
+
+    renderScore();
+
+    renderHeatmap();
+
+    renderStreaks();
+
+    renderChart();
+
+    renderStats();
+}
+
+
+// ================= START =================
+
+renderAll();
