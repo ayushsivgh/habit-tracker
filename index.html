@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0f0f10">
+
     <title>Discipline — Personal Tracker</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -17,390 +17,252 @@
 
 <div class="app">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-
-        <div class="brand">
-            <div class="brand-mark">D</div>
-            <div>
-                <h1>DISCIPLINE</h1>
-                <span>PERSONAL SYSTEM</span>
+    <!-- HEADER -->
+    <header class="topbar">
+        <div>
+            <div class="logo">
+                <span class="logo-mark">D</span>
+                <span>DISCIPLINE</span>
             </div>
+            <p class="subtitle">Build yourself. One day at a time.</p>
         </div>
 
-        <nav>
-            <button class="nav-item active" data-section="dashboard">
-                <span>⌂</span>
-                Dashboard
-            </button>
-
-            <button class="nav-item" data-section="habits">
-                <span>◉</span>
-                Habits
-            </button>
-
-            <button class="nav-item" data-section="tasks">
-                <span>✓</span>
-                To-Do
-            </button>
-
-            <button class="nav-item" data-section="schedule">
-                <span>◷</span>
-                Schedule
-            </button>
-
-            <button class="nav-item" data-section="statistics">
-                <span>↗</span>
-                Statistics
-            </button>
-        </nav>
-
-        <div class="sidebar-bottom">
-
-            <button class="sidebar-button" id="exportBtn">
-                ↓ Export data
-            </button>
-
-            <button class="sidebar-button" id="importBtn">
-                ↑ Import data
-            </button>
-
+        <div class="header-actions">
+            <button class="icon-btn" id="exportBtn" title="Export data">↓</button>
+            <button class="icon-btn" id="importBtn" title="Import data">↑</button>
             <input type="file" id="importFile" accept=".json" hidden>
+        </div>
+    </header>
 
-            <button class="sidebar-button danger" id="resetBtn">
-                Reset everything
+
+    <!-- HERO -->
+    <section class="hero">
+
+        <div class="hero-text">
+            <p class="eyebrow">YOUR PROGRESS</p>
+
+            <h1 id="greeting">Stay disciplined.</h1>
+
+            <p id="currentDate"></p>
+        </div>
+
+        <div class="score-card">
+            <div class="score-ring">
+                <span id="todayScore">0%</span>
+            </div>
+
+            <div>
+                <span class="score-label">Today's Score</span>
+                <strong id="scoreMessage">Let's begin.</strong>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- STAT CARDS -->
+    <section class="stats-grid">
+
+        <div class="stat-card">
+            <span class="stat-title">CURRENT STREAK</span>
+            <strong id="currentStreak">0</strong>
+            <span class="stat-small">days</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-title">BEST STREAK</span>
+            <strong id="bestStreak">0</strong>
+            <span class="stat-small">days</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-title">COMPLETED</span>
+            <strong id="completedTasks">0</strong>
+            <span class="stat-small">tasks</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-title">TOTAL DAYS</span>
+            <strong id="activeDays">0</strong>
+            <span class="stat-small">active</span>
+        </div>
+
+    </section>
+
+
+    <!-- 365 DAY HEATMAP -->
+    <section class="section">
+
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">CONSISTENCY</p>
+                <h2>365 Days</h2>
+            </div>
+
+            <div class="legend">
+                <span>Less</span>
+                <i class="level-0"></i>
+                <i class="level-1"></i>
+                <i class="level-2"></i>
+                <i class="level-3"></i>
+                <i class="level-4"></i>
+                <span>More</span>
+            </div>
+        </div>
+
+        <div class="heatmap-wrapper">
+            <div id="heatmap" class="heatmap"></div>
+        </div>
+
+        <div class="heatmap-footer">
+            <span id="heatmapSummary">0 active days in the last year</span>
+        </div>
+
+    </section>
+
+
+    <!-- HABITS -->
+    <section class="section">
+
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">DAILY SYSTEM</p>
+                <h2>Habits</h2>
+            </div>
+
+            <button class="primary-btn" id="addHabitBtn">
+                + Add Habit
             </button>
+        </div>
+
+        <div id="habitList" class="item-list"></div>
+
+        <div id="emptyHabits" class="empty-state">
+            <div>○</div>
+            <p>No habits yet.</p>
+            <span>Add a habit and start building consistency.</span>
+        </div>
+
+    </section>
+
+
+    <!-- TO DOS -->
+    <section class="section">
+
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">TODAY</p>
+                <h2>To-Do</h2>
+            </div>
+
+            <button class="primary-btn" id="addTodoBtn">
+                + Add Task
+            </button>
+        </div>
+
+        <div class="todo-progress">
+            <div class="progress-bar">
+                <div id="todoProgressBar"></div>
+            </div>
+
+            <span id="todoProgressText">0 / 0</span>
+        </div>
+
+        <div id="todoList" class="item-list"></div>
+
+        <div id="emptyTodos" class="empty-state">
+            <div>✓</div>
+            <p>No tasks today.</p>
+            <span>Add something you want to accomplish.</span>
+        </div>
+
+    </section>
+
+
+    <!-- DISCIPLINE -->
+    <section class="section">
+
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">ANALYTICS</p>
+                <h2>Discipline</h2>
+            </div>
+        </div>
+
+        <div class="chart-card">
+
+            <div class="chart-header">
+                <div>
+                    <span>Last 7 Days</span>
+                    <strong id="weeklyAverage">0%</strong>
+                </div>
+
+                <span class="chart-caption">Daily completion</span>
+            </div>
+
+            <div class="chart" id="weeklyChart"></div>
+
+            <div class="chart-days">
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+                <span>Sun</span>
+            </div>
 
         </div>
 
-    </aside>
+    </section>
 
-    <!-- MAIN -->
-    <main class="main">
 
-        <!-- MOBILE HEADER -->
-        <header class="mobile-header">
-            <div class="brand">
-                <div class="brand-mark">D</div>
-                <strong>DISCIPLINE</strong>
+    <!-- INSIGHTS -->
+    <section class="section">
+
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">REFLECTION</p>
+                <h2>Your System</h2>
             </div>
+        </div>
 
-            <button id="mobileMenu">☰</button>
-        </header>
+        <div class="insights-grid">
 
-        <!-- DASHBOARD -->
-        <section id="dashboard" class="section active">
-
-            <div class="topbar">
-
+            <div class="insight-card">
+                <span>🔥</span>
                 <div>
-                    <p class="eyebrow" id="todayDate">MONDAY, AUGUST 31</p>
-                    <h2>Build yourself.</h2>
-                    <p class="muted">Every day is a vote for the person you become.</p>
+                    <small>LONGEST STREAK</small>
+                    <strong id="insightStreak">0 days</strong>
                 </div>
-
-                <button class="primary-btn" id="quickHabitBtn">
-                    + Complete habit
-                </button>
-
             </div>
 
-            <!-- SCORE -->
-            <div class="dashboard-grid">
-
-                <div class="card score-card">
-
-                    <div class="card-header">
-                        <div>
-                            <p class="eyebrow">TODAY'S DISCIPLINE</p>
-                            <h3 id="scoreText">0%</h3>
-                        </div>
-
-                        <div class="score-ring" id="scoreRing">
-                            <span id="ringValue">0%</span>
-                        </div>
-                    </div>
-
-                    <div class="progress-bar">
-                        <div id="scoreProgress"></div>
-                    </div>
-
-                    <div class="score-footer">
-                        <span id="completedSummary">0 habits completed</span>
-                        <span id="taskSummary">0 tasks completed</span>
-                    </div>
-
-                </div>
-
-                <div class="card streak-card">
-
-                    <p class="eyebrow">CURRENT STREAK</p>
-
-                    <div class="streak-number">
-                        <span id="currentStreak">0</span>
-                        <small>DAYS</small>
-                    </div>
-
-                    <p class="muted">Keep showing up.</p>
-
-                    <div class="streak-line"></div>
-
-                    <div class="mini-stats">
-                        <div>
-                            <strong id="bestStreak">0</strong>
-                            <span>Best streak</span>
-                        </div>
-
-                        <div>
-                            <strong id="activeDays">0</strong>
-                            <span>Active days</span>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- HABITS -->
-            <div class="section-heading">
+            <div class="insight-card">
+                <span>⚡</span>
                 <div>
-                    <p class="eyebrow">TODAY</p>
-                    <h3>Habits</h3>
+                    <small>BEST DAY</small>
+                    <strong id="bestDay">—</strong>
                 </div>
-
-                <button class="text-btn" onclick="openHabitModal()">
-                    Manage →
-                </button>
             </div>
 
-            <div id="dashboardHabits" class="habit-grid"></div>
-
-            <!-- HEATMAP -->
-            <div class="section-heading heat-heading">
+            <div class="insight-card">
+                <span>📈</span>
                 <div>
-                    <p class="eyebrow">CONSISTENCY</p>
-                    <h3>365 days</h3>
-                </div>
-
-                <div class="heat-legend">
-                    <span>Less</span>
-                    <i class="level l0"></i>
-                    <i class="level l1"></i>
-                    <i class="level l2"></i>
-                    <i class="level l3"></i>
-                    <i class="level l4"></i>
-                    <span>More</span>
+                    <small>WEEKLY AVERAGE</small>
+                    <strong id="insightAverage">0%</strong>
                 </div>
             </div>
 
-            <div class="card heatmap-card">
-                <div class="months" id="heatMonths"></div>
-                <div class="heatmap" id="heatmap"></div>
+        </div>
 
-                <div class="heatmap-footer">
-                    <span id="yearLabel"></span>
-                    <span>Daily discipline activity</span>
-                </div>
-            </div>
+    </section>
 
-            <!-- LOWER GRID -->
-            <div class="two-column">
 
-                <div class="card">
-
-                    <div class="card-header">
-                        <div>
-                            <p class="eyebrow">TODAY</p>
-                            <h3>To-do</h3>
-                        </div>
-
-                        <button class="icon-btn" onclick="openTaskModal()">+</button>
-                    </div>
-
-                    <div id="dashboardTasks"></div>
-
-                </div>
-
-                <div class="card">
-
-                    <div class="card-header">
-                        <div>
-                            <p class="eyebrow">YOUR DAY</p>
-                            <h3>Schedule</h3>
-                        </div>
-
-                        <button class="icon-btn" onclick="openScheduleModal()">+</button>
-                    </div>
-
-                    <div id="dashboardSchedule"></div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- HABITS SECTION -->
-        <section id="habits" class="section">
-
-            <div class="topbar">
-
-                <div>
-                    <p class="eyebrow">TRACKING</p>
-                    <h2>Habits</h2>
-                    <p class="muted">Small actions. Repeated relentlessly.</p>
-                </div>
-
-                <button class="primary-btn" onclick="openHabitModal()">
-                    + New habit
-                </button>
-
-            </div>
-
-            <div id="habitManagement" class="management-list"></div>
-
-        </section>
-
-
-        <!-- TASKS -->
-        <section id="tasks" class="section">
-
-            <div class="topbar">
-
-                <div>
-                    <p class="eyebrow">EXECUTION</p>
-                    <h2>To-do</h2>
-                    <p class="muted">Know what needs to get done.</p>
-                </div>
-
-                <button class="primary-btn" onclick="openTaskModal()">
-                    + New task
-                </button>
-
-            </div>
-
-            <div class="task-filters">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="active">Active</button>
-                <button class="filter-btn" data-filter="completed">Completed</button>
-            </div>
-
-            <div id="taskManagement"></div>
-
-        </section>
-
-
-        <!-- SCHEDULE -->
-        <section id="schedule" class="section">
-
-            <div class="topbar">
-
-                <div>
-                    <p class="eyebrow">TIME</p>
-                    <h2>Schedule</h2>
-                    <p class="muted">Design your day instead of drifting through it.</p>
-                </div>
-
-                <button class="primary-btn" onclick="openScheduleModal()">
-                    + Add event
-                </button>
-
-            </div>
-
-            <div class="schedule-day-header">
-                <button id="previousDay">←</button>
-
-                <div>
-                    <strong id="scheduleDate"></strong>
-                    <span id="scheduleDayName"></span>
-                </div>
-
-                <button id="nextDay">→</button>
-            </div>
-
-            <div id="scheduleManagement"></div>
-
-        </section>
-
-
-        <!-- STATISTICS -->
-        <section id="statistics" class="section">
-
-            <div class="topbar">
-
-                <div>
-                    <p class="eyebrow">ANALYSIS</p>
-                    <h2>Statistics</h2>
-                    <p class="muted">Measure the person you're becoming.</p>
-                </div>
-
-                <div class="range-buttons">
-                    <button class="range-btn active" data-range="7">7D</button>
-                    <button class="range-btn" data-range="30">30D</button>
-                    <button class="range-btn" data-range="90">90D</button>
-                    <button class="range-btn" data-range="365">365D</button>
-                </div>
-
-            </div>
-
-            <div class="stats-cards">
-
-                <div class="card">
-                    <p class="eyebrow">AVERAGE</p>
-                    <h3 id="averageScore">0%</h3>
-                    <span class="muted">discipline score</span>
-                </div>
-
-                <div class="card">
-                    <p class="eyebrow">HABITS</p>
-                    <h3 id="totalHabitCompletions">0</h3>
-                    <span class="muted">completed</span>
-                </div>
-
-                <div class="card">
-                    <p class="eyebrow">TASKS</p>
-                    <h3 id="totalTaskCompletions">0</h3>
-                    <span class="muted">completed</span>
-                </div>
-
-                <div class="card">
-                    <p class="eyebrow">CONSISTENCY</p>
-                    <h3 id="consistencyScore">0%</h3>
-                    <span class="muted">active days</span>
-                </div>
-
-            </div>
-
-            <div class="card chart-card">
-
-                <div class="card-header">
-                    <div>
-                        <p class="eyebrow">PERFORMANCE</p>
-                        <h3>Discipline over time</h3>
-                    </div>
-                </div>
-
-                <canvas id="disciplineChart"></canvas>
-
-            </div>
-
-            <div class="card">
-
-                <div class="card-header">
-                    <div>
-                        <p class="eyebrow">HABIT PERFORMANCE</p>
-                        <h3>Your habits</h3>
-                    </div>
-                </div>
-
-                <div id="habitStats"></div>
-
-            </div>
-
-        </section>
-
-    </main>
+    <!-- FOOTER -->
+    <footer>
+        <p>Discipline is choosing between what you want now and what you want most.</p>
+        <span>Your data is stored locally on this device.</span>
+    </footer>
 
 </div>
 
@@ -410,190 +272,79 @@
 
     <div class="modal">
 
-        <div class="modal-header">
-            <div>
-                <p class="eyebrow">NEW HABIT</p>
-                <h3>Create habit</h3>
-            </div>
+        <button class="close-btn" data-close="habitModal">×</button>
 
-            <button class="close-btn" onclick="closeModal('habitModal')">×</button>
+        <p class="eyebrow">NEW HABIT</p>
+        <h2>Add a Habit</h2>
+
+        <label>
+            Habit name
+            <input
+                id="habitNameInput"
+                type="text"
+                placeholder="e.g. Workout"
+                maxlength="40"
+            >
+        </label>
+
+        <label>
+            Emoji
+            <input
+                id="habitEmojiInput"
+                type="text"
+                placeholder="💪"
+                maxlength="4"
+            >
+        </label>
+
+        <div class="modal-actions">
+            <button class="secondary-btn" data-close="habitModal">Cancel</button>
+            <button class="primary-btn" id="saveHabitBtn">Add Habit</button>
         </div>
-
-        <form id="habitForm">
-
-            <input type="hidden" id="habitId">
-
-            <label>
-                Habit name
-                <input type="text" id="habitName" placeholder="e.g. Workout" required>
-            </label>
-
-            <label>
-                Icon
-                <select id="habitIcon">
-                    <option>◉</option>
-                    <option>🏋</option>
-                    <option>💻</option>
-                    <option>📚</option>
-                    <option>📖</option>
-                    <option>💧</option>
-                    <option>😴</option>
-                    <option>🧘</option>
-                    <option>🚶</option>
-                    <option>✦</option>
-                </select>
-            </label>
-
-            <label>
-                Category
-                <input type="text" id="habitCategory" placeholder="Personal">
-            </label>
-
-            <label class="checkbox-label">
-                <input type="checkbox" id="habitDaily" checked>
-                Every day
-            </label>
-
-            <button class="primary-btn full" type="submit">
-                Save habit
-            </button>
-
-        </form>
 
     </div>
 
 </div>
 
 
-<!-- TASK MODAL -->
-<div class="modal-overlay" id="taskModal">
+<!-- TODO MODAL -->
+<div class="modal-overlay" id="todoModal">
 
     <div class="modal">
 
-        <div class="modal-header">
+        <button class="close-btn" data-close="todoModal">×</button>
 
-            <div>
-                <p class="eyebrow">TASK</p>
-                <h3>Create task</h3>
-            </div>
+        <p class="eyebrow">NEW TASK</p>
+        <h2>Add a Task</h2>
 
-            <button class="close-btn" onclick="closeModal('taskModal')">×</button>
+        <label>
+            Task
+            <input
+                id="todoInput"
+                type="text"
+                placeholder="e.g. Study JavaScript"
+                maxlength="100"
+            >
+        </label>
 
+        <label>
+            Priority
+            <select id="todoPriority">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+            </select>
+        </label>
+
+        <div class="modal-actions">
+            <button class="secondary-btn" data-close="todoModal">Cancel</button>
+            <button class="primary-btn" id="saveTodoBtn">Add Task</button>
         </div>
-
-        <form id="taskForm">
-
-            <input type="hidden" id="taskId">
-
-            <label>
-                Task
-                <input type="text" id="taskName" placeholder="What needs to be done?" required>
-            </label>
-
-            <label>
-                Category
-                <input type="text" id="taskCategory" placeholder="College">
-            </label>
-
-            <label>
-                Priority
-                <select id="taskPriority">
-                    <option value="low">Low</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="high">High</option>
-                </select>
-            </label>
-
-            <button class="primary-btn full" type="submit">
-                Save task
-            </button>
-
-        </form>
 
     </div>
 
 </div>
 
-
-<!-- SCHEDULE MODAL -->
-<div class="modal-overlay" id="scheduleModal">
-
-    <div class="modal">
-
-        <div class="modal-header">
-
-            <div>
-                <p class="eyebrow">SCHEDULE</p>
-                <h3>Add event</h3>
-            </div>
-
-            <button class="close-btn" onclick="closeModal('scheduleModal')">×</button>
-
-        </div>
-
-        <form id="scheduleForm">
-
-            <input type="hidden" id="scheduleId">
-
-            <label>
-                Activity
-                <input type="text" id="scheduleTitle" placeholder="Coding" required>
-            </label>
-
-            <div class="form-row">
-
-                <label>
-                    Start
-                    <input type="time" id="scheduleStart" required>
-                </label>
-
-                <label>
-                    End
-                    <input type="time" id="scheduleEnd" required>
-                </label>
-
-            </div>
-
-            <label>
-                Category
-                <input type="text" id="scheduleCategory" placeholder="Work">
-            </label>
-
-            <button class="primary-btn full" type="submit">
-                Save event
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
-
-
-<!-- DAY DETAIL MODAL -->
-<div class="modal-overlay" id="dayModal">
-
-    <div class="modal">
-
-        <div class="modal-header">
-
-            <div>
-                <p class="eyebrow">DAILY REVIEW</p>
-                <h3 id="dayModalTitle"></h3>
-            </div>
-
-            <button class="close-btn" onclick="closeModal('dayModal')">×</button>
-
-        </div>
-
-        <div id="dayDetails"></div>
-
-    </div>
-
-</div>
-
-
-<div id="toast"></div>
 
 <script src="script.js"></script>
 
